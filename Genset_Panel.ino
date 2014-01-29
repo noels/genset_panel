@@ -8,9 +8,10 @@
     Monitor engine parameters and supervise engine shutdown if these fall outside spec. Monitored parameters include:
       - Oil pressure/temperatature.
       - Cooling water flow. 
-      - Engine RPM
-      - Starter battery voltage
-      - Current draw
+      - Coolant Temperature.
+      - Engine RPM.
+      - Starter battery voltage.
+      - DC Current draw.
     Monitor and supervise generator parameters and provide warnings if these fall outside spec.
     Monitor and supervise battery bank.
     Provide automatic start and stop to maintain battery banks in optimal condition.
@@ -33,5 +34,51 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.    
 */
 
+/***********************************************************************************************************************/
+/*                                 GLOBAL VARIABLES FOR THINGS TO KEEP TRACK OF                                        */
+/***********************************************************************************************************************/
+
+
+/* Engine RPM from the engine tacho sensor */
+int gEngineRpm = 0;
+
+/* Engine oil pressure measured in Pascal */
+int gOilPressure  = 0;
+
+/* Engine oil temperature in Degrees Celsius */
+int gOilTemp = 0;
+
+/* Coolant temperature in Degrees Celsius */
+int gCoolantTemp = 0;
+
+/* Coolant flow in L/m */
+int gCoolantFlow = 0;
+
+/* Starter battery voltage */
+float gStartBattVolts = 0;
+
+/* Backup battery voltage */
+float gBackupBattVolts = 0;
+
+/* Total current draw */
+float gTotalCurrent = 0;
+
+
+/***********************************************************************************************************************/
+/*                                                   SETUP                                                             */
+/***********************************************************************************************************************/
+
+void setup(){
+  
+}
+
+
+/***********************************************************************************************************************/
+/*                                                 MAIN LOOP                                                           */
+/***********************************************************************************************************************/
+
+void loop(){
+  
+}
 
 
