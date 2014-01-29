@@ -99,6 +99,8 @@ float gBatteryBankAmpHours = 0;
 /***********************************************************************************************************************/
 
 void setup(){
+  //Work out current state (are we running, was there an error)
+  
   
 }
 
@@ -108,7 +110,14 @@ void setup(){
 /***********************************************************************************************************************/
 
 void loop(){
-  
+  //Check for any inputs
+  //CASE:
+    //request start
+    //request stop
+  //ESAC
+  //Update state
+  //Check parameters within spec.
+  //Log data
 }
 
 
