@@ -38,7 +38,7 @@
 /*                                 GLOBAL VARIABLES FOR THINGS TO KEEP TRACK OF                                        */
 /***********************************************************************************************************************/
 
-
+/*** ENGINE DATA ***/
 /* Engine RPM from the engine tacho sensor */
 int gEngineRpm = 0;
 
@@ -62,6 +62,36 @@ float gBackupBattVolts = 0;
 
 /* Total DC current draw */
 float gDCCurrent = 0;
+
+/*** GENSET DATA ***/
+/* L1 voltage */
+float gL1Volts = 0;
+
+/* L2 voltage */
+float gL2Volts = 0;
+
+/* L3 voltage */
+float gL3Volts = 0;
+
+/* L1 current */
+float gL1Amps = 0;
+
+/* L2 current */
+float gL2Amps = 0;
+
+/* L3 current */
+float gL3Amps = 0;
+
+/*** BATTERY BANK DATA ***/
+/* Battery bank voltage (V) */
+float gBatteryBankVols = 0;
+
+/* Battery bank current (A) */
+float gBatteryBankAmps = 0;
+
+/* Battery bank capacity (Ah) */
+float gBatteryBankAmpHours = 0;
+
 
 
 /***********************************************************************************************************************/
