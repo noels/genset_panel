@@ -60,8 +60,8 @@ float gStartBattVolts = 0;
 /* Backup battery voltage */
 float gBackupBattVolts = 0;
 
-/* Total current draw */
-float gTotalCurrent = 0;
+/* Total DC current draw */
+float gDCCurrent = 0;
 
 
 /***********************************************************************************************************************/
