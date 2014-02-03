@@ -34,6 +34,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.    
 */
 
+/***********************************************************************************************************************/
+/*                                            CONFIG PARAMETERS                                                        */
+/*                                                                                                                     */
+/*               Customise the behaviour of the controller by altering the parametes below.                            */
+/*                                                                                                                     */
+/*                                                                                                                     */
+/***********************************************************************************************************************/
+/*** START PARAMETERS ***/
+#define START_RETRIES = 3; //Try start the stinker three times before giving up.
+#define START_RETRY_REST = 15; //Seconds to wait before retrying to start.
+
 
 /***********************************************************************************************************************/
 /*                                                   IO PINS                                                           */
