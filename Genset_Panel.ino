@@ -39,9 +39,12 @@
 /*                                                   IO PINS                                                           */
 /***********************************************************************************************************************/
 
-
-
-
+#define SPI_PORT = 10; //SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
+#define OIL_T_PORT = A0; //Oil temperature
+#define OIL_P_PORT = A1; //Oil Pressure
+#define COOLANT_T_PORT = A2;
+#define COOLANT_F_PORT = A3;
+#define ENGINE_TACHO_PORT = 2; // Port 2 services an interrupt.  
 
 /***********************************************************************************************************************/
 /*                                 GLOBAL VARIABLES FOR THINGS TO KEEP TRACK OF                                        */
