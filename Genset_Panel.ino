@@ -45,6 +45,9 @@
 #define START_RETRIES = 3; //Try start the stinker three times before giving up.
 #define START_RETRY_REST = 15; //Seconds to wait before retrying to start.
 
+/*** ENGINE SPEC. PARAMS ***/
+#define MAX_COOLANT_T = 110;  //Max allowable temperature 
+
 
 /***********************************************************************************************************************/
 /*                                                   IO PINS                                                           */
