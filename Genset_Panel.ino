@@ -42,25 +42,25 @@
 /*                                                                                                                     */
 /***********************************************************************************************************************/
 /*** START PARAMETERS ***/
-#define START_RETRIES = 3;           // Try start the stinker three times before giving up.
-#define START_RETRY_REST = 15;       // Seconds to wait before retrying to start.
-#define START_WAIT = 5;              // Seconds to wait before starting 
-#define START_GLOW_PERIOD = 6;       // Seconds to warm the glow plugs before cranking. Per manual.
-#define START_CRANK_TIME = 15;       // Manual allows 60s cranking. 15s seems right to me.
+#define START_RETRIES 3           // Try start the stinker three times before giving up.
+#define START_RETRY_REST 15       // Seconds to wait before retrying to start.
+#define START_WAIT 5              // Seconds to wait before starting 
+#define START_GLOW_PERIOD 6       // Seconds to warm the glow plugs before cranking. Per manual.
+#define START_CRANK_TIME 15       // Manual allows 60s cranking. 15s seems right to me.
 
 
 /*** ENGINE SPEC. PARAMS ***/
-#define WARMUP_PERIOD = 180;         // We are not meant to load the engine during the warm up period.
-#define MIN_COOLANT_T = 71;          // Minimum normal operating temerature. We need this < 180s from start.
-#define MAX_COOLANT_T = 110;         // Max allowable temperature 
-#define MAX_OIL_T = 120;             // Guessing. No idea and the manual is no help. Internet suggest Abs. Max 150.
-#define MIN_OIL_P = 200;             // Manual suggest typical min pressure is 207kPa at rated RPM.
-#define MAX_OIL_P = 420;             // Manual suggest typical max pressure is 413kPa at rated RPM.
-#define MIN_COOLANT_FLOW = 5;        // Guessing at this value.
-#define TARGET_RPM = 1500;           // The LSA 40 wants 1500rpm.
-#define MIN_RPM = TARGET_RPM * 0.8;  // Shut down if engine underspeeds.
-#define MAX_RPM = TARGET_RPM * 1.2;  // Shut down if engine overspeeds.
-#define MIN_BATT_V = 12.2;           // Warn if the battery voltage falls below this level. 
+#define WARMUP_PERIOD 180         // We are not meant to load the engine during the warm up period.
+#define MIN_COOLANT_T 71          // Minimum normal operating temerature. We need this < 180s from start.
+#define MAX_COOLANT_T 110         // Max allowable temperature 
+#define MAX_OIL_T 120             // Guessing. No idea and the manual is no help. Internet suggest Abs. Max 150.
+#define MIN_OIL_P 200             // Manual suggest typical min pressure is 207kPa at rated RPM.
+#define MAX_OIL_P 420             // Manual suggest typical max pressure is 413kPa at rated RPM.
+#define MIN_COOLANT_FLOW 5        // Guessing at this value.
+#define TARGET_RPM 1500           // The LSA 40 wants 1500rpm.
+#define MIN_RPM TARGET_RPM * 0.8  // Shut down if engine underspeeds.
+#define MAX_RPM TARGET_RPM * 1.2  // Shut down if engine overspeeds.
+#define MIN_BATT_V 12.2           // Warn if the battery voltage falls below this level. 
 
 
 
@@ -68,21 +68,50 @@
 /*                                                   IO PINS                                                           */
 /***********************************************************************************************************************/
 
-#define SPI_PORT = 10;               // SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
-#define OIL_T_PORT = A0;             // Oil temperature
-#define OIL_P_PORT = A1;             // Oil Pressure
-#define COOLANT_T_PORT = A2;         // Water temperature
-#define COOLANT_F_PORT = A3;         // Coolant water output flow rate
-#define ENGINE_TACHO_PORT = 2;       // Port 2 services an interrupt.
-#define ENGINE_FUEL_SOLENOID = 7;    // Fuel solenoid needs to be on to run the engine.
-#define ENGINE_WATER_PUMP = 8;       // Water pump needs to be started after starting engine.
-#define ALTERNATATOR_LOAD = 9;       // Load should be enabled after warm up period, and disabled before stop.
+#define SPI_PORT 10               // SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
+#define OIL_T_PORT A0             // Oil temperature
+#define OIL_P_PORT A1             // Oil Pressure
+#define COOLANT_T_PORT A2         // Water temperature
+#define COOLANT_F_PORT A3         // Coolant water output flow rate
+#define ENGINE_TACHO_PORT 2       // Port 2 services an interrupt.
+#define ENGINE_FUEL_SOLENOID 7    // Fuel solenoid needs to be on to run the engine.
+#define ENGINE_WATER_PUMP 8       // Water pump needs to be started after starting engine.
+#define ALTERNATATOR_LOAD 9       // Load should be enabled after warm up period, and disabled before stop.
+
+/***********************************************************************************************************************/
+/*                                                   ERROR CODES                                                       */
+/***********************************************************************************************************************/
+#define E_ALREADY_RUNNING 0x001
+#define E_COOLANT_TEMP_HIGH 0x002
+
+/***********************************************************************************************************************/
+/*                                                  ENGINE STATES                                                      */
+/* Engine states are modelled on a bitmap:                                                                             */
+/*    Bit 1 = running                                                                                                  */
+/*    Bit 2 = starting                                                                                                 */
+/*    Bit 3 = warmup                                                                                                   */
+/*    Bit 4 = coolant pump running                                                                                     */
+/*    Bit 5 =                                                                                                          */                                                                              
+/*    Bit 6 =                                                                                                          */
+/*    Bit 7 =                                                                                                          */
+/*    Bit 8 = fault                                                                                                    */
+/***********************************************************************************************************************/
+
+#define S_ENGINE_STOPPED 0x0000
+#define S_ENGINE_RUNNING 0x0001
+#define S_ENGINE_STARTING 0x0002
+#define S_ENGINE_WARMUP 0x0004
+#define S_ENIGNE_COOLANT 0x0008
+#define S_ENGINE_FAULT 0x0128
 
 /***********************************************************************************************************************/
 /*                                 GLOBAL VARIABLES FOR THINGS TO KEEP TRACK OF                                        */
 /***********************************************************************************************************************/
 
 /*** ENGINE DATA ***/
+/* Engine state */
+int gEngineState = S_ENGINE_STOPPED;
+
 /* Engine RPM from the engine tacho sensor */
 int gEngineRpm = 0;
 
@@ -136,6 +165,9 @@ float gBatteryBankAmps = 0;
 /* Battery bank capacity (Ah) */
 float gBatteryBankAmpHours = 0;
 
+float gErrorCode = 0;
+
+
 
 
 /***********************************************************************************************************************/
@@ -165,9 +197,21 @@ void loop(){
 }
 
 void start(){
-    
+  //check for error condidtions that would preclude a safe start.
+  gErrorCode = getStartErrors();
+  if (gErrorCode) {
+    return;
+  }
+}
+
+int getStartErrors(){
+  
 }
 
 
-
-
+bool isRunning(){
+  // if we think the engine is running we believe ourself.
+  if (gEngineState | S_ENGINE_RUNNING) {
+    return true;
+  }
+}
