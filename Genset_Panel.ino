@@ -42,8 +42,12 @@
 /*                                                                                                                     */
 /***********************************************************************************************************************/
 /*** START PARAMETERS ***/
-#define START_RETRIES = 3;           //Try start the stinker three times before giving up.
-#define START_RETRY_REST = 15;       //Seconds to wait before retrying to start.
+#define START_RETRIES = 3;           // Try start the stinker three times before giving up.
+#define START_RETRY_REST = 15;       // Seconds to wait before retrying to start.
+#define START_WAIT = 5;              // Seconds to wait before starting 
+#define START_GLOW_PERIOD = 6;       // Seconds to warm the glow plugs before cranking. Per manual.
+#define START_CRANK_TIME = 15;       // Manual allows 60s cranking. 15s seems right to me.
+
 
 /*** ENGINE SPEC. PARAMS ***/
 #define WARMUP_PERIOD = 180;         // We are not meant to load the engine during the warm up period.
@@ -64,12 +68,15 @@
 /*                                                   IO PINS                                                           */
 /***********************************************************************************************************************/
 
-#define SPI_PORT = 10; //SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
-#define OIL_T_PORT = A0; //Oil temperature
-#define OIL_P_PORT = A1; //Oil Pressure
-#define COOLANT_T_PORT = A2;
-#define COOLANT_F_PORT = A3;
-#define ENGINE_TACHO_PORT = 2; // Port 2 services an interrupt.  
+#define SPI_PORT = 10;               // SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
+#define OIL_T_PORT = A0;             // Oil temperature
+#define OIL_P_PORT = A1;             // Oil Pressure
+#define COOLANT_T_PORT = A2;         // Water temperature
+#define COOLANT_F_PORT = A3;         // Coolant water output flow rate
+#define ENGINE_TACHO_PORT = 2;       // Port 2 services an interrupt.
+#define ENGINE_FUEL_SOLENOID = 7;    // Fuel solenoid needs to be on to run the engine.
+#define ENGINE_WATER_PUMP = 8;       // Water pump needs to be started after starting engine.
+#define ALTERNATATOR_LOAD = 9;       // Load should be enabled after warm up period, and disabled before stop.
 
 /***********************************************************************************************************************/
 /*                                 GLOBAL VARIABLES FOR THINGS TO KEEP TRACK OF                                        */
@@ -155,6 +162,10 @@ void loop(){
   //Update state
   //Check parameters within spec.
   //Log data
+}
+
+void start(){
+    
 }
 
 
