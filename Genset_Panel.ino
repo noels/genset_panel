@@ -85,6 +85,7 @@
 #define E_ALREADY_RUNNING 0x0001
 #define E_COOLANT_TEMP_HIGH 0x0002
 #define E_OIL_TEMP_HIGH 0x0003
+#define E_BATTERY_LOW 0x0004
 
 /***********************************************************************************************************************/
 /*                                                  ENGINE STATES                                                      */
@@ -200,19 +201,21 @@ void loop(){
 
 void start(){
   //check for error condidtions that would preclude a safe start.
-  gErrorCode = getStartErrors();
+  gErrorCode = getPreStartErrors();
   if (gErrorCode) {
     return;
   }
 }
 
-int getStartErrors(){
+int getPreStartErrors(){
   if (isRunning()) 
     return E_ALREADY_RUNNING;
   if (gCoolantTemp >= MAX_COOLANT_TEMP)
     return E_COOLANT_TEMP_HIGH;
   if (gOilTemp >= MAX_OIL_TEMP)
-    return E_OIL_TEMP_HIGH;  
+    return E_OIL_TEMP_HIGH;
+  if (gStartBattVolts <= MIN_BATT_V)
+    return E_BATTERY_LOW;
 }
 
 
