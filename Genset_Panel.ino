@@ -51,13 +51,14 @@
 
 /*** ENGINE SPEC. PARAMS ***/
 #define WARMUP_PERIOD 180         // We are not meant to load the engine during the warm up period.
-#define MIN_COOLANT_T 71          // Minimum normal operating temerature. We need this < 180s from start.
-#define MAX_COOLANT_T 110         // Max allowable temperature 
-#define MAX_OIL_T 120             // Guessing. No idea and the manual is no help. Internet suggest Abs. Max 150.
-#define MIN_OIL_P 200             // Manual suggest typical min pressure is 207kPa at rated RPM.
-#define MAX_OIL_P 420             // Manual suggest typical max pressure is 413kPa at rated RPM.
+#define MIN_COOLANT_TEMP 71       // Minimum normal operating temerature. We need this < 180s from start.
+#define MAX_COOLANT_TEMP 110      // Max allowable temperature 
+#define MAX_OIL_TEMP 120          // Guessing. No idea and the manual is no help. Internet suggest Abs. Max 150.
+#define MIN_OIL_PRESSURE 200      // Manual suggest typical min pressure is 207kPa at rated RPM.
+#define MAX_OIL_PRESSURE 420      // Manual suggest typical max pressure is 413kPa at rated RPM.
 #define MIN_COOLANT_FLOW 5        // Guessing at this value.
-#define TARGET_RPM 1500           // The LSA 40 wants 1500rpm.
+#define ENGINE_TARGET_RPM 1500    // The LSA 40 wants 1500rpm.
+#define ENGINE_IDLE_RPM 1000      // Idle RPM per manual
 #define MIN_RPM TARGET_RPM * 0.8  // Shut down if engine underspeeds.
 #define MAX_RPM TARGET_RPM * 1.2  // Shut down if engine overspeeds.
 #define MIN_BATT_V 12.2           // Warn if the battery voltage falls below this level. 
@@ -81,8 +82,9 @@
 /***********************************************************************************************************************/
 /*                                                   ERROR CODES                                                       */
 /***********************************************************************************************************************/
-#define E_ALREADY_RUNNING 0x001
-#define E_COOLANT_TEMP_HIGH 0x002
+#define E_ALREADY_RUNNING 0x0001
+#define E_COOLANT_TEMP_HIGH 0x0002
+#define E_OIL_TEMP_HIGH 0x0003
 
 /***********************************************************************************************************************/
 /*                                                  ENGINE STATES                                                      */
@@ -205,13 +207,20 @@ void start(){
 }
 
 int getStartErrors(){
-  
+  if (isRunning()) 
+    return E_ALREADY_RUNNING;
+  if (gCoolantTemp >= MAX_COOLANT_TEMP)
+    return E_COOLANT_TEMP_HIGH;
+  if (gOilTemp >= MAX_OIL_TEMP)
+    return E_OIL_TEMP_HIGH;  
 }
 
 
 bool isRunning(){
   // if we think the engine is running we believe ourself.
-  if (gEngineState | S_ENGINE_RUNNING) {
+  if (gEngineState | S_ENGINE_RUNNING)
     return true;
-  }
+  if (gEngineRpm >= ENGINE_IDLE_RPM)
+    return true;
+  return false;
 }
