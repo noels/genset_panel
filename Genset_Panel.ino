@@ -44,7 +44,7 @@
 /*** START PARAMETERS ***/
 #define START_RETRIES 3           // Try start the stinker three times before giving up.
 #define START_RETRY_REST 15       // Seconds to wait before retrying to start.
-#define START_WAIT 5              // Seconds to wait before starting 
+#define START_WAIT_PERIOD 5              // Seconds to wait before starting 
 #define START_GLOW_PERIOD 6       // Seconds to warm the glow plugs before cranking. Per manual.
 #define START_CRANK_TIME 15       // Manual allows 60s cranking. 15s seems right to me.
 
@@ -69,15 +69,16 @@
 /*                                                   IO PINS                                                           */
 /***********************************************************************************************************************/
 
-#define SPI_PORT 10               // SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
-#define OIL_T_PORT A0             // Oil temperature
-#define OIL_P_PORT A1             // Oil Pressure
-#define COOLANT_T_PORT A2         // Water temperature
-#define COOLANT_F_PORT A3         // Coolant water output flow rate
-#define ENGINE_TACHO_PORT 2       // Port 2 services an interrupt.
-#define ENGINE_FUEL_SOLENOID 7    // Fuel solenoid needs to be on to run the engine.
-#define ENGINE_WATER_PUMP 8       // Water pump needs to be started after starting engine.
-#define ALTERNATATOR_LOAD 9       // Load should be enabled after warm up period, and disabled before stop.
+#define SPI_PORT 10                 // SPI port needs to be on pin 10 - All a/c and d/c current/voltage is read over SPI
+#define OIL_T_PORT A0               // Oil temperature
+#define OIL_P_PORT A1               // Oil Pressure
+#define COOLANT_T_PORT A2           // Water temperature
+#define COOLANT_F_PORT A3           // Coolant water output flow rate
+#define ENGINE_TACHO_PORT 2         // Port 2 services an interrupt.
+#define ENGINE_FUEL_SOLENOID_PORT 7 // Fuel solenoid needs to be on to run the engine.
+#define ENGINE_WATER_PUMP_PORT 8    // Water pump needs to be started after starting engine.
+#define ALTERNATATOR_LOAD_PORT 9    // Load should be enabled after warm up period, and disabled before stop.
+#define BUZZER_PORT 11              // Connected to a piezo buzzer.
 
 /***********************************************************************************************************************/
 /*                                                   ERROR CODES                                                       */
@@ -205,17 +206,28 @@ void start(){
   if (gErrorCode) {
     return;
   }
+  // Nothing will stop us trying to start now.
+  gEngineState = S_ENGINE_STOPPED;
+  // Turn on the annoyer
+  digitalWrite(BUZZER_PORT, HIGH);
+  delay(START_WAIT_PERIOD);
+  digitalWrite(BUZZER_PORT, LOW);
+  gEngineState = gEngineState & S_ENGINE_STARTING;
+  
 }
 
 int getPreStartErrors(){
+  int error = 0;
   if (isRunning()) 
-    return E_ALREADY_RUNNING;
+    error = error & E_ALREADY_RUNNING;
   if (gCoolantTemp >= MAX_COOLANT_TEMP)
-    return E_COOLANT_TEMP_HIGH;
+    error = error & E_COOLANT_TEMP_HIGH;
   if (gOilTemp >= MAX_OIL_TEMP)
-    return E_OIL_TEMP_HIGH;
+    error = error & E_OIL_TEMP_HIGH;
   if (gStartBattVolts <= MIN_BATT_V)
-    return E_BATTERY_LOW;
+    error = error & E_BATTERY_LOW;
+  if (error > 0) 
+    gEngineState = gEngineState & S_ENGINE_FAULT;
 }
 
 
