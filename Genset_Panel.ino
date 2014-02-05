@@ -41,12 +41,14 @@
 /*                                                                                                                     */
 /*                                                                                                                     */
 /***********************************************************************************************************************/
-/*** START PARAMETERS ***/
+/*** START/STOP PARAMETERS ***/
 #define START_RETRIES 3           // Try start the stinker three times before giving up.
 #define START_RETRY_REST 15000    // Milliseconds to wait before retrying to start.
 #define START_WAIT_PERIOD 5000    // Milliseconds to wait before starting 
 #define START_GLOW_PERIOD 6000    // Milliseconds to warm the glow plugs before cranking. Per manual.
 #define START_CRANK_TIME 15000    // Manual allows 60s cranking. 15s seems right to me.
+#define SHUTDOWN_DELAY 15000      // Let the engine run with no load before shutdown.
+#define SHUTDOWN_WAIT 5000        // How long before we cut the fuel to wait before sounding the alarm.
 
 
 /*** ENGINE SPEC. PARAMS ***/
@@ -81,6 +83,7 @@
 #define GLOW_PLUG_PORT  11          // Glow plugs
 #define STARTER_PORT 12             // Starter motor port
 #define BUZZER_PORT 13              // Connected to a piezo buzzer.
+#define BUTTON_PORT 6               // Staert/stop control button.
 
 /***********************************************************************************************************************/
 /*                                                   ERROR CODES                                                       */
@@ -212,6 +215,12 @@ void start(){
   // Nothing will stop us trying to start now.
   gEngineState = S_ENGINE_STOPPED;
   delay(200);
+  for ( int startRetries = START_RETRIES; startRetries > 0; startRetries--){
+    engineStart();
+  }
+}
+
+void engineStart(){
   // Sound the annoyer
   digitalWrite(BUZZER_PORT, HIGH);
   delay(START_WAIT_PERIOD);
@@ -241,10 +250,45 @@ void start(){
   digitalWrite(STARTER_PORT, LOW);
   digitalWrite(GLOW_PLUG_PORT, LOW);
   gEngineState = gEngineState ^ S_ENGINE_STARTING;
-  
-}
-    
+  if (gEngineState & S_ENGINE_FAULT){
+    digitalWrite(ALTERNATATOR_LOAD_PORT, LOW);
+    engineImmediateStop();
+  }
+}  
 
+void engineStop(){
+  digitalWrite(ALTERNATATOR_LOAD_PORT, LOW);
+  delay(SHUTDOWN_DELAY);
+  engineImmediateStop();  
+}
+
+void engineImmediateStop(){
+  digitalWrite(FUEL_SOLENOID_PORT, LOW); 
+  int shutdownMillis = millis() + SHUTDOWN_WAIT;
+  while (millis() < shutdownMillis){
+    delay(200);
+    if (!isRunning()){
+      gEngineState = gEngineState ^ S_ENGINE_RUNNING;
+      break;
+    }
+  }
+  // if after trying to shut down it's still running
+  if (gEngineState & S_ENGINE_RUNNING){
+      // Sound the annoyer until someone presses the button
+      while (digitalRead(BUTTON_PORT) == LOW) {
+        digitalWrite(BUZZER_PORT, HIGH);
+        delay(200);
+        digitalWrite(BUZZER_PORT, LOW);
+        delay(200);
+      }
+  }
+}
+ 
+    
+      
+  
+  
+    
 int getPreStartFaults(){
   int fault = 0;
   if (isRunning()) 
