@@ -45,6 +45,7 @@
 #define START_RETRIES 3           // Try start the stinker three times before giving up.
 #define START_RETRY_REST 15000    // Milliseconds to wait before retrying to start.
 #define START_WAIT_PERIOD 5000    // Milliseconds to wait before starting 
+#define START_OIL_P_PERIOD 15000  // How long to wait for oil pressure to rise before emergency shutdown.
 #define START_GLOW_PERIOD 6000    // Milliseconds to warm the glow plugs before cranking. Per manual.
 #define START_CRANK_TIME 15000    // Manual allows 60s cranking. 15s seems right to me.
 #define SHUTDOWN_DELAY 15000      // Let the engine run with no load before shutdown.
@@ -78,7 +79,7 @@
 #define COOLANT_F_PORT A3           // Coolant water output flow rate
 #define ENGINE_TACHO_PORT 2         // Port 2 services an interrupt.
 #define FUEL_SOLENOID_PORT 7        // Fuel solenoid needs to be on to run the engine.
-#define ENGINE_WATER_PUMP_PORT 8    // Water pump needs to be started after starting engine.
+#define COOLANT_PUMP_PORT 8    // Water pump needs to be started after starting engine.
 #define ALTERNATATOR_LOAD_PORT 9    // Load should be enabled after warm up period, and disabled before stop.
 #define GLOW_PLUG_PORT  11          // Glow plugs
 #define STARTER_PORT 12             // Starter motor port
@@ -90,8 +91,9 @@
 /***********************************************************************************************************************/
 #define E_ALREADY_RUNNING 0x0001
 #define E_COOLANT_TEMP_HIGH 0x0002
-#define E_OIL_TEMP_HIGH 0x0003
-#define E_BATTERY_LOW 0x0004
+#define E_OIL_TEMP_HIGH 0x0006
+#define E_BATTERY_LOW 0x0008
+#define E_LOW_OIL_RPRESSURE 0x0016
 
 /***********************************************************************************************************************/
 /*                                                  ENGINE STATES                                                      */
@@ -121,8 +123,8 @@
 /* Engine state */
 int gEngineState = S_ENGINE_STOPPED;
 
-/* Warmup time */
-int gWarmupMillis = 0;
+/* Start time */
+int gStartMillis = 0;
 
 /* Engine RPM from the engine tacho sensor */
 int gEngineRpm = 0;
@@ -251,7 +253,7 @@ void engineStart(){
     }
     if (isRunning()) {
       gEngineState = gEngineState & S_ENGINE_RUNNING & S_ENGINE_WARMUP;
-      gWarmupMillis = millis() + WARMUP_PERIOD;
+      gStartMillis = millis();
       break;
     }
   }
@@ -296,8 +298,20 @@ void manageEngine(){
   // we can't manage it if it isn't running.
   if (! gEngineState & S_ENGINE_RUNNING) 
     return;
+  gOilPressure = analogRead(OIL_P_PORT);
+  gOilTemp = analogRead(OIL_T_PORT);
+  gCoolantTemp = analogRead(COOLANT_T_PORT);
+  gCoolantFlow = analogRead(COOLANT_F_PORT);
+
+  if ((gCoolantTemp > MIN_COOLANT_TEMP) || (millis() > gStartMillis + WARMUP_PERIOD)) {
+    digitalWrite(COOLANT_PUMP_PORT, HIGH);
+    gEngineState = gEngineState ^ S_ENGINE_WARMUP;
+  }
   
-  // read sensors
+  if (gEngineState & S_ENGINE_WARMUP) {
+  }
+      
+      
   // if we are warming up are we good to put the engine on load
   // if we have min temp start pumps
 } 
@@ -318,6 +332,8 @@ int getRunFaults(){
     fault = fault & E_OIL_TEMP_HIGH;
   if (gStartBattVolts <= MIN_BATT_V)
     fault = fault & E_BATTERY_LOW;
+  if ((millis() > gStartMillis + START_OIL_P_PERIOD) && (gOilPressure < MIN_OIL_PRESSURE))
+    fault = fault & E_LOW_OIL_RPRESSURE;
   return fault;
 }
 
