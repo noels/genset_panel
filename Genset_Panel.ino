@@ -309,10 +309,11 @@ void manageEngine(){
     gEngineState = gEngineState ^ S_ENGINE_WARMUP;
   }
   
-      
-      
-  // if we are warming up are we good to put the engine on load
-  // if we have min temp start pumps
+  gFaultCode = getRunFaults();
+  if (gFaultCode) {
+    gEngineState = gEngineState & S_ENGINE_FAULT;
+    engineStop();
+  }
 } 
 
 int getPreStartFaults(){
