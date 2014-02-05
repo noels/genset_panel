@@ -123,7 +123,7 @@
 int gEngineState = S_ENGINE_STOPPED;
 
 /* Start time */
-int gStartMillis = 0;
+unsigned long gStartMillis = 0;
 
 /* Engine RPM from the engine tacho sensor */
 int gEngineRpm = 0;
