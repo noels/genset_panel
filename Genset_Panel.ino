@@ -121,6 +121,9 @@
 /* Engine state */
 int gEngineState = S_ENGINE_STOPPED;
 
+/* Warmup time */
+int gWarmupMillis = 0;
+
 /* Engine RPM from the engine tacho sensor */
 int gEngineRpm = 0;
 
@@ -215,9 +218,13 @@ void start(){
   // Nothing will stop us trying to start now.
   gEngineState = S_ENGINE_STOPPED;
   delay(200);
-  for ( int startRetries = START_RETRIES; startRetries > 0; startRetries--){
+  for ( int startRetries = START_RETRIES; startRetries > 1; startRetries--){
     engineStart();
+    if (isRunning())
+      break;
+    delay(START_RETRY_REST); 
   }
+  // If we did all that and it's not running, we should tell someone.
 }
 
 void engineStart(){
@@ -243,7 +250,8 @@ void engineStart(){
       break;
     }
     if (isRunning()) {
-      gEngineState = gEngineState & S_ENGINE_RUNNING;
+      gEngineState = gEngineState & S_ENGINE_RUNNING & S_ENGINE_WARMUP;
+      gWarmupMillis = millis() + WARMUP_PERIOD;
       break;
     }
   }
@@ -283,12 +291,17 @@ void engineImmediateStop(){
       }
   }
 }
- 
-    
-      
+
+void manageEngine(){
+  // we can't manage it if it isn't running.
+  if (! gEngineState & S_ENGINE_RUNNING) 
+    return;
   
-  
-    
+  // read sensors
+  // if we are warming up are we good to put the engine on load
+  // if we have min temp start pumps
+} 
+
 int getPreStartFaults(){
   int fault = 0;
   if (isRunning()) 
@@ -309,7 +322,7 @@ int getRunFaults(){
 }
 
 
-bool isRunning(){
+boolean isRunning(){
   // if we think the engine is running we believe ourself.
   if (gEngineState | S_ENGINE_RUNNING)
     return true;
