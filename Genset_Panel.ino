@@ -112,7 +112,6 @@
 #define S_ENGINE_RUNNING 0x0001
 #define S_ENGINE_STARTING 0x0002
 #define S_ENGINE_WARMUP 0x0004
-#define S_ENIGNE_COOLANT 0x0008
 #define S_ENGINE_FAULT 0x0128
 
 /***********************************************************************************************************************/
