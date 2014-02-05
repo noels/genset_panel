@@ -43,14 +43,14 @@
 /***********************************************************************************************************************/
 /*** START PARAMETERS ***/
 #define START_RETRIES 3           // Try start the stinker three times before giving up.
-#define START_RETRY_REST 15       // Seconds to wait before retrying to start.
-#define START_WAIT_PERIOD 5              // Seconds to wait before starting 
-#define START_GLOW_PERIOD 6       // Seconds to warm the glow plugs before cranking. Per manual.
-#define START_CRANK_TIME 15       // Manual allows 60s cranking. 15s seems right to me.
+#define START_RETRY_REST 15000    // Milliseconds to wait before retrying to start.
+#define START_WAIT_PERIOD 5000    // Milliseconds to wait before starting 
+#define START_GLOW_PERIOD 6000    // Milliseconds to warm the glow plugs before cranking. Per manual.
+#define START_CRANK_TIME 15000    // Manual allows 60s cranking. 15s seems right to me.
 
 
 /*** ENGINE SPEC. PARAMS ***/
-#define WARMUP_PERIOD 180         // We are not meant to load the engine during the warm up period.
+#define WARMUP_PERIOD 180000      // We are not meant to load the engine during the warm up period.
 #define MIN_COOLANT_TEMP 71       // Minimum normal operating temerature. We need this < 180s from start.
 #define MAX_COOLANT_TEMP 110      // Max allowable temperature 
 #define MAX_OIL_TEMP 120          // Guessing. No idea and the manual is no help. Internet suggest Abs. Max 150.
@@ -75,10 +75,12 @@
 #define COOLANT_T_PORT A2           // Water temperature
 #define COOLANT_F_PORT A3           // Coolant water output flow rate
 #define ENGINE_TACHO_PORT 2         // Port 2 services an interrupt.
-#define ENGINE_FUEL_SOLENOID_PORT 7 // Fuel solenoid needs to be on to run the engine.
+#define FUEL_SOLENOID_PORT 7        // Fuel solenoid needs to be on to run the engine.
 #define ENGINE_WATER_PUMP_PORT 8    // Water pump needs to be started after starting engine.
 #define ALTERNATATOR_LOAD_PORT 9    // Load should be enabled after warm up period, and disabled before stop.
-#define BUZZER_PORT 11              // Connected to a piezo buzzer.
+#define GLOW_PLUG_PORT  11          // Glow plugs
+#define STARTER_PORT 12             // Starter motor port
+#define BUZZER_PORT 13              // Connected to a piezo buzzer.
 
 /***********************************************************************************************************************/
 /*                                                   ERROR CODES                                                       */
@@ -169,7 +171,7 @@ float gBatteryBankAmps = 0;
 /* Battery bank capacity (Ah) */
 float gBatteryBankAmpHours = 0;
 
-float gErrorCode = 0;
+float gFaultCode = 0;
 
 
 
@@ -202,32 +204,64 @@ void loop(){
 
 void start(){
   //check for error condidtions that would preclude a safe start.
-  gErrorCode = getPreStartErrors();
-  if (gErrorCode) {
+  gFaultCode = getPreStartFaults();
+  if (gFaultCode) {
+    gEngineState = gEngineState & S_ENGINE_FAULT;
     return;
   }
   // Nothing will stop us trying to start now.
   gEngineState = S_ENGINE_STOPPED;
-  // Turn on the annoyer
+  delay(200);
+  // Sound the annoyer
   digitalWrite(BUZZER_PORT, HIGH);
   delay(START_WAIT_PERIOD);
   digitalWrite(BUZZER_PORT, LOW);
   gEngineState = gEngineState & S_ENGINE_STARTING;
+  // turn on the fuel
+  digitalWrite(FUEL_SOLENOID_PORT, HIGH);  
+  // let the plugs glow...
+  digitalWrite(GLOW_PLUG_PORT, HIGH);
+  delay(START_GLOW_PERIOD);
+  // let the cranking begin
+  digitalWrite(STARTER_PORT, HIGH);
+  int crankMillis = millis() + START_CRANK_TIME;
+  // crank until either the engine starts or we exceed the start crank time.
+  while (millis() < crankMillis){
+    delay(200);
+    gFaultCode = getRunFaults();
+    if (gFaultCode > 0){
+      gEngineState = gEngineState & S_ENGINE_FAULT;
+      break;
+    }
+    if (isRunning()) {
+      gEngineState = gEngineState & S_ENGINE_RUNNING;
+      break;
+    }
+  }
+  digitalWrite(STARTER_PORT, LOW);
+  digitalWrite(GLOW_PLUG_PORT, LOW);
+  gEngineState = gEngineState ^ S_ENGINE_STARTING;
   
 }
+    
 
-int getPreStartErrors(){
-  int error = 0;
+int getPreStartFaults(){
+  int fault = 0;
   if (isRunning()) 
-    error = error & E_ALREADY_RUNNING;
+    fault = fault & E_ALREADY_RUNNING;
+  fault = fault & getRunFaults();
+  return fault;
+}
+
+int getRunFaults(){
+  int fault = 0;
   if (gCoolantTemp >= MAX_COOLANT_TEMP)
-    error = error & E_COOLANT_TEMP_HIGH;
+    fault = fault & E_COOLANT_TEMP_HIGH;
   if (gOilTemp >= MAX_OIL_TEMP)
-    error = error & E_OIL_TEMP_HIGH;
+    fault = fault & E_OIL_TEMP_HIGH;
   if (gStartBattVolts <= MIN_BATT_V)
-    error = error & E_BATTERY_LOW;
-  if (error > 0) 
-    gEngineState = gEngineState & S_ENGINE_FAULT;
+    fault = fault & E_BATTERY_LOW;
+  return fault;
 }
 
 
