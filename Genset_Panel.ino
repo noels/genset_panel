@@ -304,12 +304,15 @@ void manageEngine(){
   gCoolantFlow = analogRead(COOLANT_F_PORT);
 
   if ((gCoolantTemp > MIN_COOLANT_TEMP) || (millis() > gStartMillis + WARMUP_PERIOD)) {
-    digitalWrite(COOLANT_PUMP_PORT, HIGH);
-    gEngineState = gEngineState ^ S_ENGINE_WARMUP;
+    // if we are warming up
+    if (gEngineState & S_ENGINE_WARMUP) {
+      digitalWrite(ALTERNATATOR_LOAD_PORT, HIGH);
+      digitalWrite(COOLANT_PUMP_PORT, HIGH);
+      gEngineState = gEngineState ^ S_ENGINE_WARMUP;
+    }
+    
   }
   
-  if (gEngineState & S_ENGINE_WARMUP) {
-  }
       
       
   // if we are warming up are we good to put the engine on load
