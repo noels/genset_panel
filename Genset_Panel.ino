@@ -238,7 +238,7 @@ void start(){
   gEngineState = S_ENGINE_STOPPED;
   Serial.println("Waiting 200ms before attempting to start");
   delay(200);
-  for ( int startRetries = START_RETRIES; startRetries > 1; startRetries--){
+  for ( int startRetries = START_RETRIES; startRetries > 0; startRetries--){
     Serial.print("Starting sequence begin: Attempt #");
     Serial.println((START_RETRIES + 1) - startRetries);
     engineStart();
