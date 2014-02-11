@@ -265,6 +265,9 @@ void engineStart(){
   delay(START_GLOW_PERIOD);
   // let the cranking begin
   digitalWrite(STARTER_PORT, S_ON);
+  Serial.print("Cranking for ");
+  Serial.print(START_CRANK_TIME);
+  Serial.println("ms.");
   int crankMillis = millis() + START_CRANK_TIME;
   // crank until either the engine starts or we exceed the start crank time.
   while (millis() < crankMillis){
@@ -275,15 +278,18 @@ void engineStart(){
       break;
     }
     if (isRunning()) {
+      Serial.println("Engine started. Setting global run time.");
       gEngineState = gEngineState & S_ENGINE_RUNNING & S_ENGINE_WARMUP;
       gStartMillis = millis();
       break;
     }
   }
+  Serial.println("Turn off starter motor and glow plugs");
   digitalWrite(STARTER_PORT, S_OFF);
   digitalWrite(GLOW_PLUG_PORT, S_OFF);
   gEngineState = gEngineState ^ S_ENGINE_STARTING;
   if (gEngineState & S_ENGINE_FAULT){
+    Serial.println("A fault happened in engine startup. Performing immediate shutdown.");
     digitalWrite(ALTERNATATOR_LOAD_PORT, S_OFF);
     engineImmediateStop();
   }
