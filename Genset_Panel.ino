@@ -249,7 +249,13 @@ void start(){
       delay(START_RETRY_REST);
     }
   }
+  Serial.println("All retries complete");
   // If we did all that and it's not running, we should tell someone.
+ if (!isRunning()) {
+   gEngineState = gEngineState | S_ENGINE_FAULT;
+   engineImmediateStop();
+ }
+
 }
 
 void engineStart(){
@@ -294,7 +300,7 @@ void engineStart(){
   Serial.println("Turn off starter motor and glow plugs");
   digitalWrite(STARTER_PORT, S_OFF);
   digitalWrite(GLOW_PLUG_PORT, S_OFF);
-  gEngineState = gEngineState ^ S_ENGINE_STARTING;
+  gEngineState = gEngineState &~ S_ENGINE_STARTING;
   if (gEngineState & S_ENGINE_FAULT){
     Serial.println("A fault happened in engine startup. Performing immediate shutdown.");
     digitalWrite(ALTERNATATOR_LOAD_PORT, S_OFF);
@@ -310,11 +316,13 @@ void engineStop(){
 
 void engineImmediateStop(){
   digitalWrite(FUEL_SOLENOID_PORT, S_OFF);
-  int shutdownMillis = millis() + SHUTDOWN_WAIT;
+  unsigned long shutdownMillis = millis() + SHUTDOWN_WAIT;
+  Serial.println(gEngineState, BIN);
   while (millis() < shutdownMillis){
     delay(200);
     if (!isRunning()){
-      gEngineState = gEngineState ^ S_ENGINE_RUNNING;
+     
+      gEngineState = gEngineState &~ S_ENGINE_RUNNING;
       break;
     }
   }
@@ -342,7 +350,7 @@ void manageEngine(){
   if ((gEngineState & S_ENGINE_WARMUP) && ((gCoolantTemp > MIN_COOLANT_TEMP) || (millis() > gStartMillis + WARMUP_PERIOD))) {
     digitalWrite(ALTERNATATOR_LOAD_PORT, S_ON);
     digitalWrite(COOLANT_PUMP_PORT, S_ON);
-    gEngineState = gEngineState ^ S_ENGINE_WARMUP;
+    gEngineState = gEngineState &~ S_ENGINE_WARMUP;
   }
 
   gFaultCode = getRunFaults();
