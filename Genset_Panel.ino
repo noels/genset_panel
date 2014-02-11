@@ -223,6 +223,7 @@ void loop(){
   //Update state
   //Check parameters within spec.
   //Log data
+  digitalWrite(13, HIGH);
 }
 
 void start(){
@@ -244,8 +245,10 @@ void start(){
     engineStart();
     if (isRunning())
       break;
-    Serial.println("Engine failed to start. Taking a break before retrying.");
-    delay(START_RETRY_REST);
+    if (startRetries > 1){
+      Serial.println("Engine failed to start. Taking a break before retrying.");
+      delay(START_RETRY_REST);
+    }
   }
   // If we did all that and it's not running, we should tell someone.
 }
