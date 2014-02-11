@@ -43,11 +43,11 @@
 /***********************************************************************************************************************/
 /*** START/STOP PARAMETERS ***/
 #define START_RETRIES 3           // Try start the stinker three times before giving up.
-#define START_RETRY_REST 15000    // Milliseconds to wait before retrying to start.
-#define START_WAIT_PERIOD 5000    // Milliseconds to wait before starting 
+#define START_RETRY_REST 4000    // Milliseconds to wait before retrying to start.
+#define START_WAIT_PERIOD 3000    // Milliseconds to wait before starting 
 #define START_OIL_P_PERIOD 15000  // How long to wait for oil pressure to rise before emergency shutdown.
 #define START_GLOW_PERIOD 6000    // Milliseconds to warm the glow plugs before cranking. Per manual.
-#define START_CRANK_TIME 15000    // Manual allows 60s cranking. 15s seems right to me.
+#define START_CRANK_TIME 5000    // Manual allows 60s cranking. 15s seems right to me.
 #define SHUTDOWN_DELAY 15000      // Let the engine run with no load before shutdown.
 #define SHUTDOWN_WAIT 5000        // How long before we cut the fuel to wait before sounding the alarm.
 
@@ -240,7 +240,7 @@ void start(){
   delay(200);
   for ( int startRetries = START_RETRIES; startRetries > 1; startRetries--){
     Serial.print("Starting sequence begin: Attempt #");
-    Serial.println(startRetries);
+    Serial.println((START_RETRIES + 1) - startRetries);
     engineStart();
     if (isRunning())
       break;
