@@ -269,9 +269,6 @@ void engineStart(){
   Serial.print(START_CRANK_TIME);
   Serial.println("ms.");
   unsigned long crankMillis = millis() + START_CRANK_TIME;
-  Serial.print("Crank millis:"); Serial.println(crankMillis);
-  Serial.print("Current millis:"); Serial.println(millis());
-
   // crank until either the engine starts or we exceed the start crank time.
   while (millis() < crankMillis){
     delay(200);
