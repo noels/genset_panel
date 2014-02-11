@@ -220,8 +220,7 @@ void loop(){
     //request start
     //request stop
   //ESAC
-  //Update state
-  //Check parameters within spec.
+  manageEngine();
   //Log data
 }
 
