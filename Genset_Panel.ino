@@ -183,21 +183,35 @@ float gFaultCode = 0;
 
 
 
+#define S_ON  LOW
+#define S_OFF HIGH
+
 /***********************************************************************************************************************/
 /*                                                   SETUP                                                             */
 /***********************************************************************************************************************/
 
 void setup(){
   //Work out current state (are we running, was there an error)
+  pinMode(FUEL_SOLENOID_PORT, OUTPUT);
+  pinMode(COOLANT_PUMP_PORT, OUTPUT);
+  pinMode(ALTERNATATOR_LOAD_PORT, OUTPUT);
+  pinMode(GLOW_PLUG_PORT, OUTPUT);
+  pinMode(STARTER_PORT, OUTPUT);
+  pinMode(BUZZER_PORT, OUTPUT);
   
-  
+  digitalWrite(FUEL_SOLENOID_PORT, S_OFF);
+  digitalWrite(COOLANT_PUMP_PORT, S_OFF);
+  digitalWrite(ALTERNATATOR_LOAD_PORT, S_OFF);
+  digitalWrite(GLOW_PLUG_PORT, S_OFF);
+  digitalWrite(STARTER_PORT, S_OFF);
+  digitalWrite(BUZZER_PORT, LOW);
+  start();
 }
 
 
 /***********************************************************************************************************************/
 /*                                                 MAIN LOOP                                                           */
 /***********************************************************************************************************************/
-
 void loop(){
   //Check for any inputs
   //CASE:
@@ -223,7 +237,7 @@ void start(){
     engineStart();
     if (isRunning())
       break;
-    delay(START_RETRY_REST); 
+    delay(START_RETRY_REST);
   }
   // If we did all that and it's not running, we should tell someone.
 }
@@ -231,16 +245,16 @@ void start(){
 void engineStart(){
   // Sound the annoyer
   digitalWrite(BUZZER_PORT, HIGH);
-  delay(START_WAIT_PERIOD);
+  //delay(START_WAIT_PERIOD);
   digitalWrite(BUZZER_PORT, LOW);
   gEngineState = gEngineState & S_ENGINE_STARTING;
   // turn on the fuel
-  digitalWrite(FUEL_SOLENOID_PORT, HIGH);  
-  // let the plugs glow...
-  digitalWrite(GLOW_PLUG_PORT, HIGH);
+  digitalWrite(FUEL_SOLENOID_PORT, S_ON);
+  // let the plugs gS_OFF...
+  digitalWrite(GLOW_PLUG_PORT, S_ON);
   delay(START_GLOW_PERIOD);
   // let the cranking begin
-  digitalWrite(STARTER_PORT, HIGH);
+  digitalWrite(STARTER_PORT, S_ON);
   int crankMillis = millis() + START_CRANK_TIME;
   // crank until either the engine starts or we exceed the start crank time.
   while (millis() < crankMillis){
@@ -256,23 +270,23 @@ void engineStart(){
       break;
     }
   }
-  digitalWrite(STARTER_PORT, LOW);
-  digitalWrite(GLOW_PLUG_PORT, LOW);
+  digitalWrite(STARTER_PORT, S_OFF);
+  digitalWrite(GLOW_PLUG_PORT, S_OFF);
   gEngineState = gEngineState ^ S_ENGINE_STARTING;
   if (gEngineState & S_ENGINE_FAULT){
-    digitalWrite(ALTERNATATOR_LOAD_PORT, LOW);
+    digitalWrite(ALTERNATATOR_LOAD_PORT, S_OFF);
     engineImmediateStop();
   }
-}  
+}
 
 void engineStop(){
-  digitalWrite(ALTERNATATOR_LOAD_PORT, LOW);
+  digitalWrite(ALTERNATATOR_LOAD_PORT, S_OFF);
   delay(SHUTDOWN_DELAY);
-  engineImmediateStop();  
+  engineImmediateStop();
 }
 
 void engineImmediateStop(){
-  digitalWrite(FUEL_SOLENOID_PORT, LOW); 
+  digitalWrite(FUEL_SOLENOID_PORT, S_OFF);
   int shutdownMillis = millis() + SHUTDOWN_WAIT;
   while (millis() < shutdownMillis){
     delay(200);
@@ -284,7 +298,7 @@ void engineImmediateStop(){
   // if after trying to shut down it's still running
   if (gEngineState & S_ENGINE_RUNNING){
       // Sound the annoyer until someone presses the button
-      while (digitalRead(BUTTON_PORT) == LOW) {
+      while (digitalRead(BUTTON_PORT) == S_OFF) {
         digitalWrite(BUZZER_PORT, HIGH);
         delay(200);
         digitalWrite(BUZZER_PORT, LOW);
@@ -295,29 +309,29 @@ void engineImmediateStop(){
 
 void manageEngine(){
   // we can't manage it if it isn't running.
-  if (! gEngineState & S_ENGINE_RUNNING) 
+  if (! gEngineState & S_ENGINE_RUNNING)
     return;
   gOilPressure = analogRead(OIL_P_PORT);
   gOilTemp = analogRead(OIL_T_PORT);
   gCoolantTemp = analogRead(COOLANT_T_PORT);
-  gCoolantFlow = analogRead(COOLANT_F_PORT);
+  gCoolantFS_OFF = analogRead(COOLANT_F_PORT);
 
   if ((gEngineState & S_ENGINE_WARMUP) && ((gCoolantTemp > MIN_COOLANT_TEMP) || (millis() > gStartMillis + WARMUP_PERIOD))) {
-    digitalWrite(ALTERNATATOR_LOAD_PORT, HIGH);
-    digitalWrite(COOLANT_PUMP_PORT, HIGH);
+    digitalWrite(ALTERNATATOR_LOAD_PORT, S_ON);
+    digitalWrite(COOLANT_PUMP_PORT, S_ON);
     gEngineState = gEngineState ^ S_ENGINE_WARMUP;
   }
-  
+
   gFaultCode = getRunFaults();
   if (gFaultCode) {
     gEngineState = gEngineState & S_ENGINE_FAULT;
     engineStop();
   }
-} 
+}
 
 int getPreStartFaults(){
   int fault = 0;
-  if (isRunning()) 
+  if (isRunning())
     fault = fault & E_ALREADY_RUNNING;
   fault = fault & getRunFaults();
   return fault;
@@ -339,8 +353,9 @@ int getRunFaults(){
 
 boolean isRunning(){
   // if we think the engine is running we believe ourself.
-  if (gEngineState | S_ENGINE_RUNNING)
+  if (gEngineState & S_ENGINE_RUNNING){
     return true;
+  }
   if (gEngineRpm >= ENGINE_IDLE_RPM)
     return true;
   return false;
