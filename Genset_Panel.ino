@@ -268,12 +268,18 @@ void engineStart(){
   Serial.print("Cranking for ");
   Serial.print(START_CRANK_TIME);
   Serial.println("ms.");
-  int crankMillis = millis() + START_CRANK_TIME;
+  unsigned long crankMillis = millis() + START_CRANK_TIME;
+  Serial.print("Crank millis:"); Serial.println(crankMillis);
+  Serial.print("Current millis:"); Serial.println(millis());
+
   // crank until either the engine starts or we exceed the start crank time.
   while (millis() < crankMillis){
     delay(200);
+    Serial.print(".");
     gFaultCode = getRunFaults();
     if (gFaultCode > 0){
+      Serial.print("Engine fault ocurred. Code is: ");
+      Serial.println(gFaultCode);
       gEngineState = gEngineState & S_ENGINE_FAULT;
       break;
     }
@@ -284,6 +290,7 @@ void engineStart(){
       break;
     }
   }
+  Serial.println("");
   Serial.println("Turn off starter motor and glow plugs");
   digitalWrite(STARTER_PORT, S_OFF);
   digitalWrite(GLOW_PLUG_PORT, S_OFF);
