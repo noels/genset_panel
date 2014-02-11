@@ -314,7 +314,7 @@ void manageEngine(){
   gOilPressure = analogRead(OIL_P_PORT);
   gOilTemp = analogRead(OIL_T_PORT);
   gCoolantTemp = analogRead(COOLANT_T_PORT);
-  gCoolantFS_OFF = analogRead(COOLANT_F_PORT);
+  gCoolantFlow = analogRead(COOLANT_F_PORT);
 
   if ((gEngineState & S_ENGINE_WARMUP) && ((gCoolantTemp > MIN_COOLANT_TEMP) || (millis() > gStartMillis + WARMUP_PERIOD))) {
     digitalWrite(ALTERNATATOR_LOAD_PORT, S_ON);
