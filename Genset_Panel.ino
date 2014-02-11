@@ -192,7 +192,7 @@ float gFaultCode = 0;
 
 void setup(){
   Serial.begin(57600);
-  Serial.print('Initialising all ports');
+  Serial.println("Initialising all ports");
   //Work out current state (are we running, was there an error)
   pinMode(FUEL_SOLENOID_PORT, OUTPUT);
   pinMode(COOLANT_PUMP_PORT, OUTPUT);
@@ -229,7 +229,7 @@ void start(){
   //check for error condidtions that would preclude a safe start.
   gFaultCode = getPreStartFaults();
   if (gFaultCode) {
-    Serial.print('A fault was detected. Setting engine to fault. Code: ');
+    Serial.print("A fault was detected. Setting engine to fault. Code: ");
     Serial.println(gFaultCode);
     gEngineState = gEngineState & S_ENGINE_FAULT;
     return;
@@ -239,12 +239,12 @@ void start(){
   Serial.println("Waiting 200ms before attempting to start");
   delay(200);
   for ( int startRetries = START_RETRIES; startRetries > 1; startRetries--){
-    Serial.print('Starting sequence begin: Attempt #');
+    Serial.print("Starting sequence begin: Attempt #");
     Serial.println(startRetries);
     engineStart();
     if (isRunning())
       break;
-    Serial.println('Engine failed to start. Taking a break before retrying.');
+    Serial.println("Engine failed to start. Taking a break before retrying.");
     delay(START_RETRY_REST);
   }
   // If we did all that and it's not running, we should tell someone.
@@ -252,11 +252,11 @@ void start(){
 
 void engineStart(){
   // Sound the annoyer
-   Serial.println('Sound the buzzer as a warning');
+   Serial.println("Sound the buzzer as a warning");
   digitalWrite(BUZZER_PORT, HIGH);
   //delay(START_WAIT_PERIOD);
   digitalWrite(BUZZER_PORT, LOW);
-  Serial.println('Setting engine state to S_ENGINE_STARTING');
+  Serial.println("Setting engine state to S_ENGINE_STARTING");
   gEngineState = gEngineState & S_ENGINE_STARTING;
   // turn on the fuel
   digitalWrite(FUEL_SOLENOID_PORT, S_ON);
