@@ -43,11 +43,11 @@
 /***********************************************************************************************************************/
 /*** START/STOP PARAMETERS ***/
 #define START_RETRIES 3           // Try start the stinker three times before giving up.
-#define START_RETRY_REST 4000    // Milliseconds to wait before retrying to start.
-#define START_WAIT_PERIOD 3000    // Milliseconds to wait before starting 
+#define START_RETRY_REST 2000    // Milliseconds to wait before retrying to start.
+#define START_WAIT_PERIOD 2000    // Milliseconds to wait before starting 
 #define START_OIL_P_PERIOD 15000  // How long to wait for oil pressure to rise before emergency shutdown.
-#define START_GLOW_PERIOD 6000    // Milliseconds to warm the glow plugs before cranking. Per manual.
-#define START_CRANK_TIME 5000    // Manual allows 60s cranking. 15s seems right to me.
+#define START_GLOW_PERIOD 2000    // Milliseconds to warm the glow plugs before cranking. Per manual.
+#define START_CRANK_TIME 3000    // Manual allows 60s cranking. 15s seems right to me.
 #define SHUTDOWN_DELAY 15000      // Let the engine run with no load before shutdown.
 #define SHUTDOWN_WAIT 5000        // How long before we cut the fuel to wait before sounding the alarm.
 
@@ -223,7 +223,6 @@ void loop(){
   //Update state
   //Check parameters within spec.
   //Log data
-  digitalWrite(13, HIGH);
 }
 
 void start(){
@@ -257,10 +256,11 @@ void engineStart(){
   // Sound the annoyer
    Serial.println("Sound the buzzer as a warning");
   digitalWrite(BUZZER_PORT, HIGH);
-  //delay(START_WAIT_PERIOD);
+  delay(START_WAIT_PERIOD);
   digitalWrite(BUZZER_PORT, LOW);
   Serial.println("Setting engine state to S_ENGINE_STARTING");
   gEngineState = gEngineState & S_ENGINE_STARTING;
+  Serial.println("Turn on the glow plugs and and the fuel");
   // turn on the fuel
   digitalWrite(FUEL_SOLENOID_PORT, S_ON);
   // let the plugs gS_OFF...
